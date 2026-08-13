@@ -1,0 +1,189 @@
+# Public breast cancer datasets replacing the CANVAS NSCLC cohorts.
+# Verify every URL before a bulk download; repositories move.
+
+# ============================================================ STAGE 1
+# CN discovery. Needs single-cell tables with x/y coordinates and cell-type
+# labels. No images required. Runs on CPU.
+
+danenberg_2022:
+  role: primary_cn_discovery
+  replaces: CODEX TMA1 (n=337)
+  citation: "Danenberg E et al. Nat Genet 2022;54:660-669. doi:10.1038/s41588-022-01041-y"
+  n_tumours: 693
+  platform: "Imaging mass cytometry, 37 markers"
+  cohort: METABRIC
+  note: >
+    Authors already defined 10 recurrent TME structures. Do NOT copy their labels
+    as ground truth. Re-derive CNs with the CANVAS spatial-LDA + k-means
+    procedure, then compare your CNs to their published structures as an
+    external concordance check (adjusted Rand index). That comparison is a
+    result, not a shortcut.
+  data: "https://doi.org/10.5281/zenodo.5850952"
+  files_needed:
+    - single-cell table (cell id, image id, x, y, cell phenotype, marker means)
+    - clinical/metadata table (METABRIC IDs, ER/PR/HER2, PAM50, survival)
+  checks:
+    - confirm coordinate units (um vs px) and pixel size before applying 40 um radius
+    - confirm one row per cell, not per marker
+
+jackson_2020:
+  role: secondary_cn_cohort
+  replaces: CODEX TMA2 (n=110), independent validation
+  citation: "Jackson HW et al. Nature 2020;578:615-620 (Basel cohort)"
+  n_tumours: 352
+  platform: "Imaging mass cytometry"
+  data: "https://zenodo.org/records/3518284"
+  code: "https://github.com/BodenmillerGroup/SCPathology_publication"
+  note: "Single-cell data is already spillover corrected. Cell mask labels are not strictly sequential."
+
+keren_2018:
+  role: tnbc_reproducibility_check
+  citation: "Keren L et al. Cell 2018;174:1373-1387"
+  platform: "MIBI-TOF, 36 markers, 41 TNBC patients"
+  note: "Use to test whether breast CNs reproduce in a TNBC-only, different-platform cohort."
+
+# ============================================================ STAGE 2
+# Paired spatial-omics + same-section H&E. This is the hard requirement.
+
+xenium_breast:
+  role: paired_spatial_he_training
+  replaces: CODEX/H&E WSI cohort (n=10)
+  platform: "10x Xenium In Situ, FFPE human breast"
+  license: "CC BY 4.0"
+  why: >
+    Post-Xenium H&E is stained on the SAME section after the run and 10x supplies
+    an image alignment file. This is the only free breast resource with true
+    same-section pairing at cellular resolution.
+  candidates:
+    - "https://www.10xgenomics.com/datasets/xenium-ffpe-human-breast-with-custom-add-on-panel-1-standard"
+    - "https://www.10xgenomics.com/datasets/xenium-prime-ffpe-human-breast-cancer"
+    - "https://www.10xgenomics.com/datasets/xenium-ffpe-human-breast-biomarkers"
+  companion_code: "https://github.com/10XGenomics/janesick_nature_comms_2023_companion"
+  caveat: >
+    10x states the registered H&E is suitable for region annotation but may not
+    be exact at sub-cellular resolution. Refine with PALOM before label transfer
+    and record residual registration error per sample. If median residual
+    exceeds 5 um the patch labels are unreliable.
+  cn_transfer_method: >
+    Xenium gives RNA not protein. Annotate Xenium cells with Seurat
+    (SCTransform, PCA, clustering), then map each cell's local neighbourhood
+    composition to the nearest IMC-derived reference CN by cosine similarity.
+    This is exactly what CANVAS did for its Xenium orthogonal validation.
+
+# ============================================================ STAGE 4
+# Large H&E cohort for deployment.
+
+tcga_brca:
+  role: primary_deployment_cohort
+  replaces: TCGA-LUAD / TCGA-LUSC (n=945)
+  n_slides: "~1100 diagnostic (DX) FFPE slides, ~1080 patients"
+  slides: "https://portal.gdc.cancer.gov"
+  clinical: "TCGA-CDR (Liu et al. Cell 2018) for OS, DSS, PFI, DFI"
+  molecular: "https://www.cbioportal.org  (brca_tcga_pan_can_atlas_2018)"
+  filters:
+    - "slide barcode must contain DX (diagnostic FFPE), exclude TS/BS frozen"
+    - "one slide per patient; if multiple, take largest tissue area"
+  download: "gdc-client with a manifest, or the GDC API. Budget ~1 TB for the full set."
+  laptop_subset: "Start with 50 slides stratified by PAM50. ~40 GB."
+
+# ============================================================ EXTERNAL VALIDATION
+
+cptac_brca:
+  role: independent_he_validation
+  source: "https://proteomics.cancer.gov/programs/cptac  /  TCIA"
+
+bcnb:
+  role: independent_he_validation
+  citation: "Early Breast Cancer Core-Needle Biopsy WSI dataset"
+  note: "1058 patients with WSI + clinical + ER/PR/HER2 + ALN status. Freely downloadable."
+
+post_nat_brca:
+  role: neoadjuvant_response_substitute
+  source: "TCIA"
+  note: >
+    CANVAS module 3 used ICB cohorts. There is no clean public breast ICB
+    imaging cohort. Substitute neoadjuvant chemotherapy pCR as the treatment
+    endpoint, or drop the module. Do not claim ICB findings.
+
+# ============================================================ MOLECULAR TOOLS
+
+deconvolution:
+  estimate: "R package estimate — stromal, immune, tumour purity"
+  cibersortx: "https://cibersortx.stanford.edu — LM22, free academic account, web only"
+  xcell: "R package xCell — 64 signatures"
+  gsva: "Bioconductor GSVA — MSigDB / KEGG / Reactome"
+  note: "CIBERSORTx has no offline API. Export bulk TPM, run on the web portal, re-import."
+
+# ============================================================ FOUNDATION MODELS
+
+encoders:
+  musk:
+    hf: "xiangjx/musk"
+    gated: true
+    note: "Used in the paper. Needs approved HF access + write token."
+  uni:
+    hf: "MahmoodLab/UNI"
+    gated: true
+  virchow:
+    hf: "paige-ai/Virchow"
+    gated: true
+  conch:
+    hf: "MahmoodLab/CONCH"
+    gated: true
+  phikon:
+    hf: "owkin/phikon"
+    gated: false
+    note: "DEFAULT on laptop profile. No approval needed."
+  ctranspath:
+    gated: false
+    note: "Weights via the TransPath GitHub release, not HF."
+  resnet50:
+    gated: false
+    note: "torchvision ImageNet baseline. The paper's weakest benchmark — keep it as the floor."
+
+
+# ============================================================ CRC TRACK (FINAL DESIGN)
+
+orion_crc:
+  role: paired_spatial_he_training   # THE reason to use CRC
+  citation: "Lin JR, Chen YA, Campton D, et al. Nat Cancer 2023;4:1036-1052. doi:10.1038/s43018-023-00576-1"
+  platform: "Orion, 18-plex immunofluorescence + H&E from the SAME CELLS, whole slide"
+  n_patients: 74
+  n_paired_wsi: 41
+  he_mpp: 0.325
+  he_scanner: "Aperio GT450"
+  markers: [Hoechst, CD31, CD45, CD68, CD4, FOXP3, CD8a, CD45RO, CD20,
+            PD-L1, CD3e, CD163, E-cadherin, Pan-CK, SMA, Ki67]
+  excluded_marker: "PD-1 (poor signal quality in the original study)"
+  data: "https://doi.org/10.5281/zenodo.7637655   (file manifest)"
+  also: "https://humantumoratlas.org  and  https://www.tissue-atlas.org/atlas-datasets/lin-chen-campton-2023/"
+  total_size: "~10.5 TB for the full release. Pull 8-12 slides only."
+  why_this_beats_xenium_breast: |
+    Same-section protein multiplex, whole-slide, 41 paired WSIs, already
+    registered. Xenium breast gives 1-3 samples, RNA not protein, and 10x
+    documents its H&E alignment as suitable for region annotation but not
+    sub-cellular correspondence. Training a habitat classifier on one patient
+    and deploying across TCGA is a generalisation claim with no support.
+
+schurch_2020:
+  role: primary_cn_discovery
+  citation: "Schurch CM et al. Cell 2020;182:1341-1359"
+  platform: "CODEX, 56 markers, 35 CRC patients, 140 tissue regions"
+  note: |
+    The paper that introduced cellular neighbourhoods. Using it makes the CN
+    discovery step a direct methodological analogue of CANVAS rather than a
+    substitution. Single-cell tables with coordinates and cell types are public.
+
+tcga_coad_read:
+  role: in_domain_deployment
+  n_slides: "~600 diagnostic (DX) FFPE across COAD + READ"
+  slides: "https://portal.gdc.cancer.gov"
+  clinical: "TCGA-CDR for OS, DSS, PFI, DFI; MSI status from cBioPortal"
+
+tcga_brca_transfer:
+  role: cross_cancer_generalisation
+  note: |
+    In the final design breast is the TRANSFER cohort, not the training cohort.
+    Apply the CRC-trained habitat model to TCGA-BRCA and quantify degradation.
+    CANVAS did the same, applying a lung-trained model across 12 tumour types.
+    This keeps a breast result while placing the training where the data is.

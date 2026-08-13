@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------- data
+# Primary data are public but large (Orion H&E alone is ~1 GB per specimen).
+# They are downloaded by scripts/, never committed.
+data/raw/
+data/interim/
+data/processed/
+data/external/
+
+# Intermediate results and logs are regenerable and stay out of the repo.
+results/*
+!results/tables/
+logs/
+models/
+
+# Figures, tables and the written reports ARE committed: they are the
+# deliverable, and a reader should not have to run a 17 GB download and
+# several hours of compute to see them. Regenerate with:
+#     python scripts/run_report.py && python scripts/run_manuscript.py
+#
+# This costs roughly 70 MB of repository size. To slim it, drop the two
+# largest derived formats (both fully regenerable from the markdown and
+# the figures):
+#     git rm --cached reports/analysis_report.html reports/*.docx
+
+# Keep the directory structure without the contents
+!data/.gitkeep
+
+# ---------------------------------------------------------------- python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.python-version
+
+# ---------------------------------------------------------------- tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------- editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------- secrets
+# Encoder weights for gated models are fetched with a token read from the
+# environment. Never commit a token or a .env file.
+.env
+*.token
+hf_token*

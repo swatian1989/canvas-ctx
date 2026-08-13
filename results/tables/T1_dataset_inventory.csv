@@ -1,0 +1,7 @@
+cohort,platform,n,role,accession,replaces,status
+Schurch 2020 CRC CODEX,"CODEX, 56-plex",35 patients / 140 regions,CN discovery (primary),Mendeley data mpjzbtfgfr/1,41-plex CODEX NSCLC (paper),NOT ACQUIRED
+Orion 2023 CRC IF+H&E,"Orion, 18-plex IF + same-section H&E",74 resections (8-12 used),Paired label transfer (train/val/test),s3://lin-2023-orion-crc/data (public),"Same-section CODEX+H&E, lung (paper)",NOT ACQUIRED
+TCGA-COAD DX,"H&E WSI, FFPE diagnostic",60 slides (target),In-domain deployment,GDC portal,Paper's in-domain NSCLC deployment cohort,NOT ACQUIRED
+TCGA-BRCA DX,"H&E WSI, FFPE diagnostic",60 slides (target),Cross-cancer transfer (the result),GDC portal,Paper's 17-specimen/12-tumour-type transfer cohort,NOT ACQUIRED
+TCGA-CDR,Curated clinical table,"pan-cancer, filtered to COAD+BRCA","Survival endpoints (OS, PFI)",GDC PanCanAtlas publications page,paper's clinical annotation,NOT ACQUIRED
+Simulated null fixture,synthetic,200 samples (stage5 --simulate),Statistical machinery validation,"generated in-repo, no download",n/a - machinery check only,ACQUIRED (generated)

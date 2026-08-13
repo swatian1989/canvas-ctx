@@ -1,0 +1,6 @@
+metric,value
+adjusted_rand_index,0.37700557460957235
+normalized_mutual_info,0.4696057064175394
+n_cells,250476.0
+n_our_cns,10.0
+n_published_cns,10.0

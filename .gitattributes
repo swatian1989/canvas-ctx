@@ -1,0 +1,18 @@
+# Normalise line endings so the repository is identical across platforms.
+* text=auto eol=lf
+
+# Binary artefacts: never diffed, never line-ending converted.
+*.png binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.parquet binary
+*.tif binary
+*.tiff binary
+
+# Generated reports are large and derived; collapse them in pull requests.
+reports/analysis_report.html linguist-generated=true
+reports/*.docx linguist-generated=true
+
+# Notebooks are documentation here, not the primary source.
+*.ipynb linguist-documentation=true

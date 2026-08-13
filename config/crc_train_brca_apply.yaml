@@ -1,0 +1,80 @@
+# FINAL DESIGN — train on CRC where paired data is strong, apply to breast.
+#
+# Rationale. The pipeline's hard requirement is paired spatial-omics plus
+# SAME-SECTION H&E. Breast has 1-3 Xenium samples (RNA, and 10x documents its
+# H&E alignment as unsuitable for sub-cellular correspondence). Colorectal has
+# Orion: 74 CRC resections, 18-plex protein IF and H&E from the same cells,
+# 41 WSIs with both modalities, already registered at 0.325 um/px.
+#
+# So: discover CNs and train the habitat model on CRC, then apply the trained
+# model to TCGA-BRCA as a cross-cancer generalisation test. CANVAS did exactly
+# this, applying its lung-trained model to 17 specimens across 12 tumour types.
+# Breast becomes the RESULT rather than the shaky foundation.
+#
+#   python scripts/run_stage1_cn.py --config config/crc_train_brca_apply.yaml ...
+
+inherit: config/pilot.yaml
+
+project:
+  name: canvas-ctx
+  profile: laptop
+  seed: 42
+  n_habitats: 10
+
+# --------------------------------------------------- STAGE 1  CN discovery
+cn_discovery:
+  source: schurch                # CODEX 56-plex CRC, 35 patients, 140 regions.
+                                 # The original cellular-neighbourhood paper
+                                 # (Schurch et al. Cell 2020). Closest public
+                                 # analogue to the CANVAS CODEX atlas.
+  fallback_source: orion         # derive CNs from Orion IF single cells if
+                                 # Schurch access is slow; 18-plex is thinner
+                                 # but it is the same tissue as the H&E
+  radius_um: 40.0
+  kmeans:
+    k_min: 5
+    k_max: 20
+    final_k: 10
+
+# --------------------------------------------------- STAGE 2  paired
+paired:
+  source: orion_crc
+  n_train_slides: 8              # patient-level split
+  n_val_slides: 2
+  n_test_slides: 2               # held out entirely, touched once
+  native_mpp: 0.325              # Orion H&E, Aperio GT450
+  registration_prereg: true      # Orion is same-section and already registered.
+                                 # Still verify residuals; do not assume.
+  max_centroid_distance_um: 5.0
+
+# --------------------------------------------------- STAGE 4  two cohorts
+inference:
+  primary_cohort: TCGA-COAD      # same cancer as training: in-domain check
+  transfer_cohort: TCGA-BRCA     # different cancer: the generalisation claim
+  slide_type: DX
+  pilot_n_slides: 60
+  transfer_n_slides: 60          # stratify by PAM50
+
+# --------------------------------------------------- STAGE 6
+clinical:
+  endpoints: [OS, PFI]
+  stratify_by_primary: [MSI_status, stage]        # CRC axes
+  stratify_by_transfer: [PAM50, ER_status]        # breast axes
+  covariates_primary: [age, sex, stage, MSI_status]
+  covariates_transfer: [age, stage, grade, ER_status, PR_status, HER2_status]
+
+# --------------------------------------------------- what the paper claims
+claims:
+  supported: |
+    1. Breast/CRC CNs can be derived reproducibly and named from marker
+       enrichment.
+    2. Habitats are inferable from H&E at patch level with held-out patients.
+    3. Spatial context (grid2d/grid3d) improves habitat inference over the
+       per-patch CANVAS baseline, tested across >=6 seeds with a paired test.
+    4. A CRC-trained habitat model transfers to breast H&E with quantified
+       degradation.
+  NOT_supported: |
+    - Any hazard ratio from 60 slides split across 5 subtypes.
+    - That CRC-derived CNs are biologically identical to breast CNs. They are
+      not. Report habitat-profile shift between cohorts, do not hide it.
+    - Immunotherapy response. No public breast ICB imaging cohort exists.

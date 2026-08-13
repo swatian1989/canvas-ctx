@@ -1,0 +1,11 @@
+our_cn,proposed_name,n_cells,best_published_match,overlap_fraction
+CN01,Macrophage-adipose,41628,Macrophage enriched,0.699
+CN02,Bulk tumour,30355,Bulk tumor,0.895
+CN03,Cytotoxic-infiltrated stroma,29421,Immune-infiltrated stroma,0.578
+CN04,Lymphoid follicle,15938,Follicle,0.726
+CN05,Pan-immune cytotoxic,27757,T cell enriched,0.606
+CN06,Plasma-cell rich,19765,T cell enriched,0.433
+CN07,Memory CD4 T-cell,12624,T cell enriched,0.82
+CN08,Tumour boundary myeloid,23838,Tumor boundary,0.554
+CN09,Smooth muscle-lymphatic,32417,Vascularized smooth muscle,0.454
+CN10,Granulocyte-enriched,16733,Granulocyte enriched,0.822

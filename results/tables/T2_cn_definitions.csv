@@ -1,0 +1,11 @@
+cn_label,proposed_name,top_enriched_cell_types_z,frequency_pct
+CN01,Macrophage-adipose,"CD68+CD163+ macrophages (+2.6), adipocytes (+2.3), CD163+ macrophages (+1.9)",16.6
+CN02,Bulk tumour,"tumor cells (+2.5), tumor cells / immune cells (-0.2), immune cells (-0.4)",12.1
+CN03,Cytotoxic-infiltrated stroma,"stroma (+2.8), CD68+ macrophages GzmB+ (+2.5), nerves (+2.2)",11.7
+CN04,Lymphoid follicle,"B cells (+2.8), CD4+ T cells (+2.5), CD3+ T cells (+1.5)",6.4
+CN05,Pan-immune cytotoxic,"immune cells (+2.8), CD4+ T cells GATA3+ (+2.8), CD11b+ monocytes (+2.8)",11.1
+CN06,Plasma-cell rich,"plasma cells (+2.8), undefined (+2.8), immune cells / vasculature (+2.2)",7.9
+CN07,Memory CD4 T-cell,"CD4+ T cells CD45RO+ (+2.8), CD4+ T cells (+1.0), CD8+ T cells (+0.6)",5.0
+CN08,Tumour boundary myeloid,"tumor cells / immune cells (+2.8), CD68+ macrophages (+1.6), CD11c+ DCs (+1.3)",9.5
+CN09,Smooth muscle-lymphatic,"lymphatics (+2.8), smooth muscle (+2.8), CD11b+CD68+ macrophages (+2.6)",12.9
+CN10,Granulocyte-enriched,"granulocytes (+2.8), CD68+ macrophages (+1.2), Tregs (+1.1)",6.7

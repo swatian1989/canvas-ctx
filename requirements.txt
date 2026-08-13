@@ -1,0 +1,57 @@
+# canvas-ctx dependencies.
+#
+# Lower bounds are the versions this pipeline has been run against; they are
+# not upper-bounded so the environment can move forward. Reproducing a
+# specific result exactly requires the versions recorded in the run manifest
+# of that result, which every stage writes alongside its output.
+#
+#     pip install -r requirements.txt
+#     pip install -e .
+
+# ---------------------------------------------------------------- core
+numpy>=2.0
+pandas>=2.1
+scipy>=1.11
+scikit-learn>=1.4
+pyyaml>=6.0
+tqdm>=4.66
+pyarrow>=14.0
+tabulate>=0.9          # markdown table rendering in the report
+
+# ------------------------------------------------- survival and statistics
+lifelines>=0.28
+scikit-survival>=0.22
+statsmodels>=0.14
+
+# ---------------------------------------------------------------- graphs
+networkx>=3.2
+python-igraph>=0.11    # Louvain communities for collinearity reduction
+
+# ------------------------------------------------- deep learning (CPU wheels
+# are sufficient; install a CUDA build of torch for GPU)
+torch>=2.2
+torchvision>=0.17
+timm>=0.9
+transformers>=4.38
+huggingface-hub>=0.21
+
+# --------------------------------------------------------- whole-slide imaging
+pillow>=10.2
+opencv-python-headless>=4.9
+tifffile>=2024.1       # pyramidal OME-TIFF (Orion H&E)
+imagecodecs>=2024.1    # JPEG/zlib codecs used by those files
+zarr>=2.16             # windowed reads without loading a whole level
+
+# ---------------------------------------------------------------- reporting
+matplotlib>=3.8
+python-docx>=1.1
+openpyxl>=3.1          # reads the TCGA-CDR workbook
+
+# ---------------------------------------------------------------- dev
+pytest>=8.0
+ruff>=0.2
+
+# ---------------------------------------------------------------- optional
+# openslide-python>=1.3   # only for Aperio/SVS slides (TCGA); Orion uses tifffile
+# spatial-lda             # true spatial-LDA prior; falls back to sklearn LDA
+# stardist>=0.9           # nuclear segmentation, CPU friendly

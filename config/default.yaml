@@ -1,0 +1,172 @@
+# canvas-brca default configuration
+# Values marked [PAPER] are taken from CANVAS STAR Methods. Change with care.
+
+project:
+  name: canvas-brca
+  seed: 42
+  profile: laptop          # laptop | colab | hpc
+  n_habitats: 10           # [PAPER] 10 CNs
+  background_class: true   # -> K+1 = 11 output logits
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  external: data/external
+  logs: logs
+  models: models
+  figures: figures
+
+# ---------------------------------------------------------------- stage 1
+cn_discovery:
+  source: danenberg              # danenberg | jackson | keren
+  radius_um: 40.0                # [PAPER] 40 um neighbourhood
+  expected_neighbours: 25        # [PAPER] sanity check, ~25 cells at 40 um
+  min_cells_per_image: 200
+  spatial_lda:
+    n_topics: 20
+    difference_penalty: 0.25
+    n_iter: 200
+    primary_cell_type: null      # null = use all cells as index cells
+  kmeans:
+    k_min: 5                     # [PAPER] sweep k = 5..20
+    k_max: 20
+    n_init: 25
+    final_k: 10                  # [PAPER] selected solution
+  selection_metrics: [silhouette, davies_bouldin, adjusted_rand_adjacent]
+
+interaction:
+  radius_um: 40.0                # [PAPER]
+  n_permutations: 1000           # [PAPER]
+  fdr_alpha: 0.05
+
+triplet_motifs:
+  gcn_hidden: 64
+  gcn_epochs: 300
+  gcn_lr: 0.01
+  rra_fdr: 0.01                  # [PAPER] FDR < 0.01
+
+barrier_score:
+  immune_type: CD8_T
+  tumour_type: Tumour_Ki67
+  barrier_type: CAF
+  knn_k: 8
+
+# ---------------------------------------------------------------- stage 2
+registration:
+  method: palom                  # palom | manual_affine
+  spatial_channel: DAPI
+  he_channel: hematoxylin
+  max_centroid_distance_um: 5.0  # [PAPER] 5 um centroid-to-centroid
+  qc_manual_review: true
+
+patching:
+  patch_px: 224                  # [PAPER]
+  stride_px: 224                 # [PAPER] non-overlapping is sufficient
+  target_mpp: 0.25               # [PAPER] 40x equivalent
+  laptop_mpp: 0.50               # 20x fallback, Fig S7B shows comparable acc
+  min_tissue_frac: 0.35
+  stain_norm: macenko            # macenko | vahadane | reinhard | none
+
+patch_labelling:
+  background_max_cells: 5        # [PAPER] <=5 cells -> background
+  informative_min_cells: 15      # [PAPER] >15 cells required
+  dominant_frac: 0.60            # [PAPER] dominant CN >= 60%
+  split_level: sample            # [PAPER] never split at patch level
+  val_fraction: 0.20             # [PAPER] 80/20
+
+# ---------------------------------------------------------------- stage 3
+model:
+  encoder: phikon                # musk | uni | virchow | conch | phikon | ctranspath | resnet50
+  encoder_input_px:
+    musk: 384                    # [PAPER] 224 -> resized to 384 for MUSK
+    uni: 224
+    virchow: 224
+    conch: 224
+    phikon: 224
+    ctranspath: 224
+    resnet50: 224
+  head_dims: [256, 128]          # [PAPER]
+  dropout: 0.5                   # [PAPER]
+  loss:
+    type: focal                  # [PAPER]
+    alpha: 0.25
+    gamma: 2.0
+  sampler: weighted_random       # [PAPER] weight = 1 / class frequency
+  optimiser: adam                # [PAPER]
+  lr: 1.0e-4                     # [PAPER]
+  lr_decay: 0.95                 # [PAPER] exponential
+  batch_size: 64                 # [PAPER]
+  epochs: 60                     # [PAPER]
+  freeze_epochs: 10              # [PAPER] head only for first 10
+  unfreeze_last_n_layers: 2      # [PAPER] final two encoder layers thereafter
+  augment:
+    hflip: 0.5
+    vflip: 0.5
+    rotate90: true
+    colour_jitter: {brightness: 0.2, contrast: 0.2, saturation: 0.2, hue: 0.05}
+  cache_embeddings: true         # essential on CPU
+  amp: false                     # true on colab/hpc
+
+evaluation:
+  metrics: [accuracy, macro_f1, cohen_kappa]   # [PAPER]
+  n_bootstrap: 1000                            # [PAPER]
+  benchmark_encoders: [uni, virchow, resnet50] # [PAPER]
+
+# ---------------------------------------------------------------- stage 4
+inference:
+  cohort: TCGA-BRCA
+  slide_type: DX                 # diagnostic FFPE only, never TS/BS frozen
+  tumour_detector: vit_pancancer
+  cell_segmenter: cellvit        # cellvit | stardist | hovernet
+  compartments:
+    method: spatial_clustering
+    n_clusters: 3                # tumour bulk | leading edge | other
+    neighbourhood_k: 8
+  min_patches_per_compartment: 50
+
+# ---------------------------------------------------------------- stage 5
+features:
+  total_expected: 262            # [PAPER] assert this
+  composition: 10
+  diversity: 6
+  dispersion_per_habitat: 9      # 9 x 10 habitats = 90
+  interaction: 100               # 10 x 10 ordered matrix
+  distance: 55                   # 10 self + 45 pairs
+  transition: 1
+  interaction_permutations: 1000 # [PAPER]
+  null_model: toroidal           # DEVIATION from paper: toroidal shift, not
+                                 # label shuffling. Shuffling destroys spatial
+                                 # autocorrelation and declares ~94% of habitat
+                                 # pairs significant. Toroidal preserves each
+                                 # habitat's own clustering and randomises only
+                                 # the relative registration. Report this.
+  transition_knn_k: 6            # [PAPER] k = 6
+  edge_correction: border        # DEVIATION: border-corrected Ripley K/L and
+                                 # Donnelly-corrected Clark-Evans. The paper
+                                 # does not specify; uncorrected estimates are
+                                 # biased on small cores.
+  ripley_radii_um: [20, 50, 100, 200]
+
+# ---------------------------------------------------------------- stage 6
+clinical:
+  endpoints: [OS, DSS, PFI, DFI]              # [PAPER] TCGA-CDR
+  stratify_by: [PAM50, ER_status, HER2_status] # breast-specific
+  covariates: [age, stage, grade, ER_status, PR_status, HER2_status]
+  consensus_clustering:
+    algorithm: pam                            # [PAPER]
+    distance: canberra                        # [PAPER]
+    max_k: 8
+    reps: 1000
+    p_item: 0.8
+    p_feature: 1.0
+  signature:
+    collinearity_rho: 0.95                    # [PAPER] drop |rho| > 0.95
+    community_method: louvain                 # [PAPER] igraph
+    lasso_repeats: 100                        # [PAPER]
+    lasso_cv_folds: 5                         # [PAPER]
+    lasso_top_frac: 0.10                      # [PAPER] top 10% selection freq
+    rsf_bootstrap: 1000                       # [PAPER]
+    td_auc_months: [6, 12, 24]                # [PAPER]
+  fdr_method: fdr_bh                          # [PAPER] Benjamini-Hochberg
+  alpha: 0.05

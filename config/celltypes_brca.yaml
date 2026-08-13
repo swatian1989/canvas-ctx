@@ -1,0 +1,49 @@
+# Breast cell-type taxonomy for CN discovery.
+# Danenberg 2022 reports 32 fine-grained phenotypes. CANVAS built CNs on major
+# lineages first, then resolved cell states within CNs. Do the same: cluster on
+# `lineages`, then characterise states inside each CN.
+#
+# Map the source labels to these lineages in `lineage_map` once you have the
+# actual column values from the Zenodo table. Do not guess the strings.
+
+lineages:
+  - Tumour_epithelial        # keep subsets separate below
+  - Myoepithelial            # NO LUNG ANALOGUE - diagnostically critical in breast
+  - CD8_T
+  - CD4_T
+  - Treg
+  - B_cell
+  - Plasma_cell
+  - Macrophage
+  - Neutrophil_granulocyte
+  - Dendritic
+  - CAF                      # fibroblast / stromal
+  - Endothelial
+  - Adipocyte                # abundant in breast, absent in lung TMAs
+  - Unknown                  # handle separately, never let it drive a CN
+
+# Cell states resolved WITHIN neighbourhoods, after CN assignment.
+# CANVAS called these cell-state ecological units (CEUs).
+states:
+  Tumour_epithelial: [ER_pos, HER2_pos, Ki67_pos, CK5_6_basal, EMT_like]
+  CD8_T: [GZMB_pos, PD1_pos, exhausted]
+  CD4_T: [Th, ICOS_pos]
+  Macrophage: [CD163_M2, CD68_M1, PDL1_pos]
+  CAF: [FAP_pos, aSMA_pos_mCAF, PDPN_pos]
+
+lineage_map: {}   # populate from the real Danenberg phenotype column
+
+notes: |
+  Two breast-specific points that matter.
+
+  Myoepithelial cells have no lung equivalent. Their spatial continuity around
+  ducts distinguishes DCIS from invasive carcinoma. A CN defined by intact
+  versus disrupted myoepithelial investment is the most clinically interesting
+  breast-only habitat available and is plausibly inferable from H&E, since
+  pathologists read exactly this feature by eye.
+
+  Adipocytes are abundant in breast tissue and essentially absent from NSCLC
+  TMA cores. Adipose-adjacent tumour margin is a real biological compartment
+  (crown-like structures, tumour-adipocyte crosstalk). If your IMC panel does
+  not capture adipocytes, note that the CN taxonomy is blind to a genuine
+  breast compartment, and consider recovering it on the H&E side instead.

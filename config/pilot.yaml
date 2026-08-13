@@ -1,0 +1,126 @@
+# PILOT PROFILE — small-data track for a CPU-only 16 GB machine.
+#
+# Everything here is chosen so the whole project runs end to end on your laptop
+# in about a week, with one Colab session for patch encoding. Inherit
+# default.yaml and override with this file.
+#
+# Run:  python scripts/run_stage1_cn.py --config config/pilot.yaml ...
+
+inherit: config/default.yaml
+
+project:
+  profile: laptop
+  seed: 42
+  n_habitats: 8            # fewer CNs on a smaller cohort; sweep and confirm
+
+# ------------------------------------------------------- STAGE 1  small cohort
+cn_discovery:
+  source: keren            # 41 TNBC patients, MIBI-TOF, ~200k cells, ONE csv
+  radius_um: 40.0
+  min_cells_per_image: 200
+  spatial_lda:
+    n_topics: 15
+  kmeans:
+    k_min: 4
+    k_max: 14
+    final_k: 8
+    n_init: 25
+
+# Why Keren for the pilot: single downloadable cell table, 41 patients, TNBC
+# only, runs in ~2 min on CPU. Danenberg (693 tumours) is the full-scale
+# version; do not start there. Cross-check: once the pilot works on Keren,
+# rerun on a 100-image Danenberg subset and compare CNs by adjusted Rand index.
+# Agreement across two platforms on a small cohort is a genuine result.
+
+# ------------------------------------------------------- STAGE 2  ONE sample
+registration:
+  max_centroid_distance_um: 5.0
+  qc_manual_review: true
+pilot_paired_samples: 1     # one Xenium breast section with post-Xenium H&E
+
+patching:
+  patch_px: 224
+  stride_px: 224
+  target_mpp: 0.50          # 20x, not 40x. Fig S7B shows comparable accuracy.
+  max_patches_per_slide: 4000   # grid-subsample beyond this
+  min_tissue_frac: 0.40
+
+# ------------------------------------------------------- STAGE 3  cheap model
+model:
+  encoder: phikon           # ungated, 768-dim, no HF approval needed
+  batch_size: 32
+  epochs: 30                # not 60; frozen encoder converges sooner
+  freeze_epochs: 30         # NEVER unfreeze on CPU. Encoder stays frozen.
+  unfreeze_last_n_layers: 0
+  cache_embeddings: true    # mandatory
+  amp: false
+
+evaluation:
+  n_bootstrap: 500
+  benchmark_encoders: [resnet50]   # skip gated UNI/Virchow in the pilot
+
+# ------------------------------------------------------- STAGE 4  60 slides
+inference:
+  cohort: TCGA-BRCA
+  slide_type: DX
+  pilot_n_slides: 60        # 12 per PAM50 subtype, stratified
+  cell_segmenter: stardist  # CellViT needs a GPU
+  min_patches_per_compartment: 25
+
+# ------------------------------------------------------- STAGE 5  cheaper perms
+features:
+  interaction_permutations: 200   # 1000 in the paper; state the reduction
+  transition_knn_k: 6
+
+# ------------------------------------------------------- STAGE 6
+clinical:
+  endpoints: [OS, PFI]      # DSS and DFI have too few events at n=60
+  consensus_clustering:
+    reps: 500
+  signature:
+    lasso_repeats: 50
+    rsf_bootstrap: 200
+
+# ------------------------------------------------------- METHOD 2
+method2:
+  k_values: [0, 4, 8, 16]   # k=0 IS Method 1. The sweep is the ablation.
+  radius_um: 300.0
+  proj_dim: 128             # 256 in the full config
+  epochs: 30
+  use_deepset: true
+  use_attention: true
+  distance_prior: true
+
+# ------------------------------------------------------- honesty ledger
+# Every reduction below must appear in the manuscript limitations, not be
+# quietly absorbed:
+#   - 41 TNBC patients for CN discovery, not 693 mixed-subtype tumours
+#   - 8 CNs, not 10
+#   - one paired section for label transfer, not ten
+#   - frozen encoder, no fine-tuning of the final two layers
+#   - Phikon, not MUSK
+#   - 20x, not 40x
+#   - 200 interaction permutations, not 1000
+#   - 60 TCGA slides, not ~1100
+# The pilot answers "does this pipeline work", not "what is the effect size".
+# Do not report hazard ratios from 60 slides as a finding.
+
+# ------------------------------------------------------- METHOD 2 grids
+method2_grid:
+  modes: [none, graph, grid2d, grid3d]
+  window: 5            # 7 at full scale; 5 keeps the pilot cube small
+  n_scales: 3          # 1 = grid2d only; 3 = 40x/20x/10x equivalent
+  scale_mode: pool     # free. "encode" is faithful but triples encoding cost
+  grid_channels: 64    # 96 at full scale
+  proj_dim: 128
+  epochs: 30
+  batch_size: 128
+# grid3d is the slowest mode on CPU (roughly 4x grid2d). Run none/graph/grid2d
+# first, add grid3d once the others are stable.
+
+# ------------------------------------------------------- benchmark rigour
+benchmark:
+  seeds: [1, 2, 3, 4, 5, 6]   # Wilcoxon cannot reach p<0.05 with fewer than 6
+                              # seeds; with 3 the floor is p=0.25.
+  report: [macro_f1, cohen_kappa]   # never accuracy alone
+  check_per_class_recall: true      # a collapsed habitat is invisible in accuracy
