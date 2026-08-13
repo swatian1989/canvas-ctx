@@ -77,6 +77,27 @@ GPU automatically.
 
 ## Usage
 
+### One command
+
+```bash
+python scripts/run_pipeline.py             # every stage, in order
+python scripts/run_pipeline.py --dry-run   # print the plan, run nothing
+python scripts/run_pipeline.py --quick     # fast smoke run, fewer seeds
+python scripts/run_pipeline.py --from 9    # resume at a given stage
+```
+
+The orchestrator delegates to the same standalone scripts documented below,
+so there is one implementation of each stage and no duplicated logic. It is
+idempotent: a stage whose output already exists is skipped, so an interrupted
+run resumes where it stopped. Stages needing hours of CPU are marked `SLOW`,
+and `--dry-run` shows those estimates before anything executes.
+
+Two stages dominate the runtime: patch encoding (about 2.9 hours on CPU for
+24,000 patches, roughly ten minutes on a T4) and the context ablation (about
+three hours at six seeds). Everything else completes in minutes.
+
+### Individual stages
+
 Stages are independent and each writes a cached artefact, so any stage can be
 re-run without repeating the ones before it.
 

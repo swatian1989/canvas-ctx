@@ -9,6 +9,43 @@ Run order for a full reproduction is top to bottom.
 
 ---
 
+## `run_pipeline.py` — single entry point
+
+Runs every stage below in order, in VS Code, a terminal, or Colab. It shells
+out to the same scripts documented here rather than reimplementing them, so
+there is one source of truth per stage.
+
+```bash
+python scripts/run_pipeline.py                 # everything
+python scripts/run_pipeline.py --dry-run       # plan only, nothing executes
+python scripts/run_pipeline.py --quick         # fewer seeds/epochs/samples
+python scripts/run_pipeline.py --from 9        # resume from a stage
+python scripts/run_pipeline.py --stages 3 4    # selected stages only
+python scripts/run_pipeline.py --specimens CRC01 CRC02 CRC03
+python scripts/run_pipeline.py --force         # rerun completed stages
+```
+
+Completion is judged per stage by whether its declared outputs exist. A stage
+that writes one shard per specimen, such as patch encoding, is treated as
+complete only when every shard is present; testing the containing directory
+would report a half-finished encoding run as done and let training proceed on
+partial data. Partial stages print `resuming, N/M shards present`.
+
+A stage whose inputs are missing is reported `BLOCKED` with the missing paths
+named, rather than failing obscurely part way through.
+
+### `download_schurch.py`
+Fetches the discovery cohort table (223 MB) from Mendeley Data and verifies it
+by SHA-256 against the published checksum. A truncated or corrupted download is
+deleted rather than kept, and a complete file is left alone.
+
+```bash
+python scripts/download_schurch.py [--force] [--skip-checksum]
+```
+**Writes** `data/raw/CRC_clusters_neighborhoods_markers.csv`
+
+---
+
 ## Stage 1 — cellular neighbourhood discovery
 
 ### `prepare_schurch.py`
