@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/USER/canvas-ctx"
+Repository = "https://github.com/swatian1989/canvas-ctx"
 
 [tool.setuptools.packages.find]
 where = ["src"]
