@@ -107,10 +107,21 @@ def _pending(data: str, unblocks: str) -> str:
 def build_manuscript_sections() -> list[MSection]:
     return [
         MSection("Title", 1, [
-            "**Spatial context improves inference of tumour ecological habitats from "
-            "routine histology: a colorectal-trained, breast-applied re-implementation "
-            "of CANVAS**",
+            "**Cellular neighbourhoods reproduce across spatial proteomics platforms "
+            "but do not transfer between marker panels: a validated pipeline for "
+            "habitat inference from routine histology**",
             "*Author list, affiliations and corresponding author to be completed.*",
+            "*Scope note for the authors, to be deleted before submission. The title "
+            "above states what the present data support: cross-platform "
+            "reproducibility of cellular neighbourhoods, a verified registration and "
+            "label-transfer pipeline, and a diagnosed failure mode when a taxonomy is "
+            "carried across marker panels of different depth. The architectural "
+            "contribution (CANVAS-CTX) is reported here as method and machinery, with "
+            "its controlled ablation validated on synthetic data. The claim that "
+            "spatial context improves habitat inference on real tissue requires the "
+            "multi-specimen benchmark described in Ongoing work and is deliberately "
+            "NOT made in this manuscript. Making it now would rest on a fixture "
+            "constructed to reward context.*",
         ]),
 
         MSection("Abstract", 1, [
@@ -136,15 +147,35 @@ def build_manuscript_sections() -> list[MSection]:
             "single cells profiled by 56-plex CODEX across 135 colorectal regions from "
             "35 patients recovered ten spatially coherent cellular neighbourhoods "
             "spanning tumour, boundary, lymphoid, myeloid, stromal and vascular "
-            "compartments. Validated against the neighbourhood labels published with "
-            "the source cohort, agreement was moderate and structurally complete "
-            "(adjusted Rand index 0.377; every published neighbourhood type "
-            "represented; bulk tumour recovered at 89.5 percent overlap). " +
-            _pending("Orion paired IF/H&E specimens, TCGA-COAD and TCGA-BRCA "
-                    "diagnostic slides",
-                    "the habitat-inference, transfer and prognostic results"),
-            "**Conclusions.** " + _pending(
-                "all of the above", "Abstract conclusions"),
+            "compartments. Scored against the neighbourhood labels published with the "
+            "source cohort, agreement was moderate and structurally complete (adjusted "
+            "Rand index 0.377; every published neighbourhood type represented; bulk "
+            "tumour recovered at 89.5 percent overlap), despite the two procedures "
+            "differing in how each window is defined. In an independent cohort imaged "
+            "by 18-plex immunofluorescence with same-section haematoxylin and eosin, "
+            "registration was verified rather than assumed: 97.1 percent of 1,620,375 "
+            "segmented cells fell within the tissue mask and the global residual was "
+            "bounded below 2.6 microns against a 5 micron acceptance threshold. "
+            "Transferring the 56-plex neighbourhood taxonomy onto the 18-plex panel "
+            "failed in a reproducible and diagnosable way: collapsing both taxonomies "
+            "onto the eight lineages the thinner panel can express left one "
+            "neighbourhood with a near-uniform composition profile, which acted as a "
+            "nearest-centroid attractor and absorbed 64 percent of all cells at a "
+            "median cosine similarity of 0.653. Deriving neighbourhoods de novo on the "
+            "paired cohort resolved this, yielding ten habitats of which eight matched "
+            "a discovery-cohort neighbourhood at cosine similarity above 0.89, and "
+            "13,321 patches passing the purity rules with every habitat represented.",
+            "**Conclusions.** Cellular neighbourhood structure is recoverable across "
+            "spatial proteomics platforms and cohorts, but a neighbourhood taxonomy is "
+            "not portable between marker panels of different depth: the limiting factor "
+            "is the shared cell-type vocabulary, not the clustering. Habitats should "
+            "therefore be derived on the panel that is paired with the histology, which "
+            "is also what the original method does. We release a verified, "
+            "configuration-driven implementation covering neighbourhood discovery "
+            "through survival modelling, including a registration check that reports a "
+            "residual bound rather than assuming a supplied alignment, and a "
+            "calibration procedure that revealed in-sample optimism in the prognostic "
+            "signature chain.",
         ]),
 
         MSection("Introduction", 1, [
@@ -262,75 +293,177 @@ def build_manuscript_sections() -> list[MSection]:
             "the same cells, not that the original implementation was reproduced.",
         ]),
 
-        MSection("Habitat label transfer onto matched H&E", 2, [
-            _pending("8-12 Orion CRC specimens (s3://lin-2023-orion-crc/data): "
-                    "single-cell tables, registered H&E, segmentation masks",
-                    "Figures 2A-2C, Table S3"),
-            "*Planned content: median registration residual in microns against the 5 um "
-            "acceptance threshold, the proportion of H&E nuclei matched within that "
-            "threshold, patch counts retained by the purity rules, and the class "
-            "distribution across the patient-level train, validation and test split.*",
+        MSection("Registration verification in the paired cohort", 2, [
+            "The paired cohort images 18-plex immunofluorescence and haematoxylin and "
+            "eosin from the same tissue section and distributes the histology already "
+            "registered to the multiplex frame, so the expected transform is the "
+            "identity. We verified this rather than relying on it, because a "
+            "sub-cellular offset would corrupt every patch label while leaving the "
+            "output superficially plausible. Segmented cell centroids and the histology "
+            "share a coordinate frame: centroid extents reach 78,371 and 55,447 pixels "
+            "against image dimensions of 78,417 by 57,360, and the median segmented cell "
+            "area of 406 square pixels corresponds to a 7.4 micron diameter at the "
+            "stated resolution of 0.325 microns per pixel.",
+            "Across 1,620,375 segmented cells in the exemplar specimen, 97.1 percent of "
+            "centroids fell inside a tissue mask derived independently from the "
+            "histology. Cross-correlating that mask against the cell-density map placed "
+            "the peak at zero displacement (Figure 2). We report the residual as a bound "
+            "rather than as zero, because the check cannot resolve below one pixel at "
+            "the pyramid level used: the global residual is below 2.6 microns, within "
+            "the 5 micron acceptance threshold. The check is global and rigid, and would "
+            "not detect local warping.",
         ]),
 
-        MSection("Spatial context improves habitat inference from H&E", 2, [
-            _pending("cached patch embeddings from the Orion cohort with transferred "
-                    "habitat labels", "Figures 3A-3D, Tables 1 and S6"),
-            "*Planned content: macro-F1 and Cohen's kappa with bootstrap confidence "
-            "intervals for each of the four context modes across at least six seeds, "
-            "the paired Wilcoxon test of each context mode against the per-patch "
-            "baseline, per-class recall for every habitat, and the parameter-matched "
-            "comparison between the two-dimensional and multi-scale grids. Note that a "
-            "paired signed-rank test over six seeds cannot yield p below 0.0312; report "
-            "effect size with dispersion, not the p value alone.*",
-            "*Machinery validation performed to date, on synthetic data only and not "
-            "for inclusion as a finding: the four-mode ablation executes correctly "
-            "across six seeds with no class collapse, confirming that the training "
-            "loop, the sample-level split and the paired comparison behave as "
-            "specified. The synthetic fixture is constructed with oriented bands that "
-            "reward spatial context by design and therefore carries no biological "
-            "information whatsoever.*",
+        MSection("A neighbourhood taxonomy does not transfer between marker panels", 2, [
+            "We first attempted to carry the 56-plex discovery taxonomy onto the "
+            "18-plex paired cohort, which is what the overall design requires. This "
+            "failed, and the failure is informative rather than incidental.",
+            "The two panels resolve different numbers of cell types, 28 phenotypes "
+            "against 16 biological markers, so the taxonomies cannot be matched cell for "
+            "cell. Collapsing both onto the eight lineages the thinner panel can express "
+            "makes them formally comparable but destroys the distinctions that define "
+            "several neighbourhoods. One neighbourhood, defined in the full taxonomy by "
+            "plasma cells and unassigned populations that both fall into catch-all "
+            "buckets after collapse, was left with the flattest composition profile of "
+            "all ten, no lineage exceeding 28.5 percent. A near-uniform vector is close "
+            "to everything under cosine distance, and that neighbourhood duly absorbed "
+            "64 percent of all cells at a median cosine similarity of 0.653, while the "
+            "smallest class retained two patches.",
+            "Grouping real histology patches by dominant gated lineage (Figure 2C) "
+            "localised the limiting step. Tumour epithelium is called correctly, showing "
+            "malignant glandular architecture with enlarged hyperchromatic nuclei, as is "
+            "smooth muscle stroma; the immune and vascular gates reach only 28 to 46 "
+            "percent dominant-lineage purity and are visibly mixed. The gated tumour "
+            "fraction of 57.4 percent exceeds the 19 percent of the discovery cohort, "
+            "which we attribute to sampling rather than threshold calibration: the "
+            "paired cohort images whole tumour-rich resections, whereas the discovery "
+            "cores were positioned at the invasive front to balance compartments. The "
+            "morphology supports that reading.",
         ]),
 
-        MSection("Habitat composition of colorectal and breast cohorts", 2, [
-            _pending("60 TCGA-COAD and 60 TCGA-BRCA diagnostic (DX) slides",
-                    "Figures 4A-4C, Table S4"),
-            "*Planned content: whole-slide habitat maps, the tumour bulk and leading "
-            "edge partition, and quantified habitat composition shift between the "
-            "training cancer type and the transfer cancer type. Any habitat that is "
-            "essentially absent in breast should be reported explicitly, as it would "
-            "indicate a colorectal neighbourhood with no breast counterpart.*",
+        MSection("De novo derivation on the paired panel recovers the same structure", 2, [
+            "Deriving neighbourhoods directly on the paired cohort removes the "
+            "vocabulary mismatch, because discovery and transfer then share one panel. "
+            "This is also closer to the original method, which discovers neighbourhoods "
+            "in the spatial modality paired with the histology rather than importing "
+            "them from elsewhere.",
+            "Applying the identical procedure over 1,620,375 cells produced ten habitats "
+            "with distinct identities: pure tumour, a second tumour compartment, myeloid "
+            "and immune, two smooth-muscle stromal compartments, a B and T cell lymphoid "
+            "aggregate, vasculature, mixed immune infiltrate, and a tumour-adjacent "
+            "mixed compartment. No centroid acted as an attractor.",
+            "These independently derived habitats recapitulate the discovery-cohort "
+            "taxonomy. Matching the two by lineage composition, eight of ten aligned at "
+            "cosine similarity above 0.89, including bulk tumour at 0.999, smooth muscle "
+            "at 0.970 and the lymphoid compartment at 0.971. The two exceptions were the "
+            "habitat dominated by unassigned cells (0.559) and one vascular and stromal "
+            "pairing (0.725). Two cohorts, two platforms and two independent derivations "
+            "therefore converge on comparable tissue architecture, even though the "
+            "taxonomy itself is not portable between them.",
+            "Under the patch purity rules this yielded 13,321 labelled patches with "
+            "every habitat and the background class represented, the smallest at 87 "
+            "patches, against two patches for the smallest class under the rejected "
+            "transfer (Supplementary Table S3).",
         ]),
 
-        MSection("Spatial features and prognostic association", 2, [
-            _pending("habitat maps from the preceding section joined to TCGA-CDR "
-                    "outcomes", "Figures 5A-5D, Tables 2, S7 and S9"),
-            "*Planned content: the 262-feature matrix, univariate Cox hazard ratios "
-            "with 95 percent confidence intervals and Benjamini-Hochberg q values per "
-            "habitat and compartment, ecotypes from consensus clustering, and the "
-            "multivariable signature. Report the number of EVENTS in every stratum. Do "
-            "not report a hazard ratio for any stratum containing fewer than ten "
-            "events.*",
-            "*Critical methodological caution established during pipeline validation: "
-            "when the selection chain (LASSO-Cox, then random survival forest "
-            "permutation importance, then multivariable Cox) is fitted and evaluated on "
-            "the same subjects, it returns concordance indices between 0.60 and 0.80 on "
-            "outcomes that are pure noise, with the inflation shrinking as sample size "
-            "grows. Any concordance index reported here must therefore come from a "
-            "held-out split or carry an explicit bootstrap optimism correction.*",
+        MSection("Calibration of the spatial-feature and survival machinery", 2, [
+            "Before any real prognostic estimate is attempted, the downstream "
+            "statistical chain was calibrated against an outcome carrying no signal: "
+            "the 262-feature matrix computed from simulated habitat maps was joined to "
+            "independently drawn exponential survival times. Univariate Cox testing "
+            "behaved correctly, returning no features below the false-discovery "
+            "threshold at n = 200 (Figure 5B, Supplementary Table S7), and Kaplan-Meier "
+            "curves stratified by habitat tertile overlapped as expected (Figure 5C).",
+            "The terminal signature model did not behave correctly, and we report this "
+            "as a methodological finding rather than a footnote. Fitted concordance "
+            "indices of 0.60 to 0.80 were obtained on pure noise across four independent "
+            "draws, decreasing as sample size rose. This is in-sample optimism: feature "
+            "selection by resampled LASSO-Cox, filtering by random survival forest "
+            "permutation importance, and evaluation of the final multivariable model all "
+            "share the same subjects, with no held-out split at any point. Any "
+            "concordance index produced by this chain, here or elsewhere, must therefore "
+            "come from held-out data or carry an explicit optimism correction. We note "
+            "in passing that the cross-validation fold parameter is declared but "
+            "unreferenced in the reference implementation, which may contribute to the "
+            "instability at small sample size.",
+        ]),
+
+        MSection("Ongoing work: the context ablation on real tissue", 2, [
+            "The architectural contribution described in Methods is implemented, tested "
+            "and validated as machinery, but the claim that spatial context improves "
+            "habitat inference is deliberately not made here. On a synthetic fixture the "
+            "four-mode ablation executes correctly across six seeds with no class "
+            "collapse, confirming that the training loop, the slide-level split and the "
+            "paired comparison behave as specified (Figure 3). That fixture is "
+            "constructed with oriented bands that reward spatial context by design, so "
+            "the margin it produces characterises the implementation and carries no "
+            "information about tissue. Reporting it as evidence would be circular.",
+            "The corresponding test on real histology requires habitat-labelled patch "
+            "embeddings across enough specimens to support a patient-level split, since "
+            "a patch-level split combined with spatial context places neighbouring "
+            "patches on both sides of the partition and renders the comparison "
+            "meaningless. Twelve specimens of the paired cohort have been acquired and "
+            "processed to a shared habitat taxonomy for this purpose. The benchmark will "
+            "report macro-F1 and Cohen's kappa with bootstrap confidence intervals and "
+            "per-class recall across at least six seeds with a paired signed-rank test, "
+            "noting that six pairs bound the attainable p value at 0.0312, and will "
+            "include a capacity-matched comparison between the two-dimensional and "
+            "multi-scale grid encoders so that any advantage of the latter is not "
+            "confounded with parameter count.",
+            "Deployment to independent histology cohorts, including the cross-cancer "
+            "application, follows the same sequence and is likewise not claimed here.",
         ]),
 
         MSection("Discussion", 1, [
-            _pending("all Results sections", "Discussion"),
-            "*Planned structure. First paragraph: restate the principal finding, "
-            "namely whether spatial context improves habitat inference over the "
-            "per-patch baseline and by how much, with dispersion across seeds. Second: "
-            "interpret the direction and magnitude of the colorectal-to-breast habitat "
-            "shift and what it implies about the biological transferability of "
-            "colorectal neighbourhoods. Third: relate the observed effect to spatially "
-            "aware architectures elsewhere in the field [ref: titan] and state what the "
-            "attention maps show that a per-patch model cannot produce. Fourth: state "
-            "the clinical implication honestly, which at pilot scale is that the "
-            "pipeline is feasible rather than that any effect size is established.*",
+            "Cellular neighbourhood structure is reproducible across cohorts and "
+            "platforms. Applying a fixed-radius, topic-decomposition procedure to a "
+            "56-plex colorectal cohort recovered every neighbourhood type reported by "
+            "the original investigators of that cohort, with bulk tumour matched at 89.5 "
+            "percent overlap, despite the two analyses defining each window differently: "
+            "ten nearest neighbours there against a 40 micron radius here. An adjusted "
+            "Rand index of 0.377 is moderate, and we read it as convergence on "
+            "comparable tissue architecture rather than as reproduction of a specific "
+            "partition. The same convergence appeared again, independently, when "
+            "habitats were derived on an entirely separate cohort imaged with a "
+            "different platform, where eight of ten habitats matched a discovery-cohort "
+            "neighbourhood above cosine 0.89.",
+            "The taxonomy itself, however, is not portable. Our attempt to carry a "
+            "56-plex neighbourhood definition onto an 18-plex panel failed in a specific "
+            "and diagnosable way, and we report it because the failure mode generalises. "
+            "Any transfer of this kind requires a shared cell-type vocabulary, and the "
+            "shared vocabulary is bounded by the thinner panel. Neighbourhoods "
+            "distinguished only by phenotypes the thinner panel cannot resolve collapse "
+            "toward a near-uniform composition, and a near-uniform centroid is nearest "
+            "to everything under the usual distance metrics, so it absorbs the cohort. "
+            "The practical implication is that habitats should be defined on the panel "
+            "that is paired with the histology. That is what the original method does, "
+            "and our results indicate it is a requirement rather than a convenience.",
+            "Two methodological points recur throughout this work and apply beyond it. "
+            "First, supplied alignments should be verified. The paired cohort is imaged "
+            "from a single section and distributed pre-registered, and our check "
+            "confirmed it, but the check is cheap, needs no landmarks, and reports a "
+            "residual bound; a sub-cellular offset would otherwise corrupt every label "
+            "while leaving the output plausible. Second, selection and evaluation on the "
+            "same subjects inflates apparent prognostic performance. Our calibration "
+            "against a null outcome returned concordance indices as high as 0.80 on pure "
+            "noise, decaying with sample size, which is the signature of in-sample "
+            "optimism rather than of any defect in the individual estimators.",
+            "The architectural question that motivated this work remains open by "
+            "design. Habitat labels are defined from a 40 micron neighbourhood while the "
+            "published predictor observes a single patch, so information that determines "
+            "the target is withheld from the model, and the wider field has moved toward "
+            "spatially aware aggregation for related reasons [ref: titan]. Our "
+            "implementation makes the corresponding test a controlled ablation rather "
+            "than a model comparison, since the context branch degenerates exactly to "
+            "the per-patch baseline at zero neighbours. We report the machinery as "
+            "validated and the biological question as unanswered, because the only data "
+            "on which we have run the ablation is a fixture built to reward the "
+            "hypothesis.",
+            "The clinical scope of this work is correspondingly limited. We describe a "
+            "verified pipeline and two reproducibility results, not a prognostic "
+            "finding. The deployment cohorts contemplated in the design are small "
+            "enough that stratified hazard ratios would not be interpretable, and we "
+            "have deliberately reported none.",
         ]),
 
         MSection("Limitations", 1, [
@@ -604,22 +737,28 @@ def build_figure_legends() -> list[tuple[str, str, str]]:
         "residuals in microns with the 5 um acceptance threshold indicated. (C) Patch "
         "label distribution per class and per split, with representative patches for "
         "each habitat. All panels require the paired Orion specimens."),
-        ("Figure 3", "Spatial context improves habitat inference",
+        ("Figure 3", "Validation of the context ablation on a synthetic fixture",
         "(A) Training loss and validation macro-F1 by epoch for all four context "
         "modes. (B) Row-normalised confusion matrix with per-class recall annotated. "
         "(C) Macro-F1 and Cohen's kappa by context mode, mean and standard deviation "
-        "across seeds with individual seeds overlaid and paired test results "
-        "annotated; the per-patch baseline is marked as the published reference "
-        "method. (D) Parameter count against macro-F1, testing whether any advantage "
-        "of the grid encoders reflects capacity rather than spatial structure. All "
-        "panels require habitat-labelled embeddings from the Orion cohort."),
-        ("Figure 4", "Habitat inference across colorectal and breast cohorts",
+        "across six seeds with individual seeds overlaid and paired test results "
+        "annotated; the per-patch baseline is marked as the reference method. "
+        "(D) Parameter count against macro-F1, testing whether any advantage of the "
+        "grid encoders reflects capacity rather than spatial structure. "
+        "THESE PANELS ARE MACHINERY VALIDATION, NOT A BIOLOGICAL RESULT. The fixture "
+        "is constructed with oriented bands that reward spatial context by design, so "
+        "the separation shown demonstrates that the training loop, the slide-level "
+        "split and the paired comparison behave as specified, and nothing about "
+        "tissue. The equivalent test on real histology is described under Ongoing "
+        "work."),
+        ("Figure 4", "Planned deployment to independent histology cohorts",
         "(A) Whole-slide habitat maps overlaid on H&E with the tumour bulk and "
         "leading edge boundary drawn. (B) Attention weights showing which neighbouring "
         "patches the context model consulted, an output the per-patch model cannot "
         "produce. (C) Habitat composition shift between the training and transfer "
-        "cancer types. All panels require diagnostic whole-slide images and a trained "
-        "classifier."),
+        "cancer types. This display item is reserved for the deployment described "
+        "under Ongoing work and is not populated in the present manuscript; the panels "
+        "shown state the data each requires."),
         ("Figure 5", "Spatial features and clinical association",
         "(A) The 262-feature matrix, clustered, annotated by feature block. "
         "(B) Univariate Cox hazard ratios with 95 percent confidence intervals per "
